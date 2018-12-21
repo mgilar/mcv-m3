@@ -39,7 +39,7 @@ def print_res(names, accuracies, times):
 
 
 def save_data(object, filename):
-    filehandler = open(filename, 'w')
+    filehandler = open(filename, 'wb')
     pickle.dump(object, filehandler)
 
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         ima = cv2.imread(filename)
         gray = cv2.cvtColor(ima, cv2.COLOR_BGR2GRAY)
         kpt = get_keypoints(gray, kp_detector)
-        des = get_descriptors(gray, kpt, desc_type)
+        kpt, des = get_descriptors(gray, kpt, desc_type)
         words = codebook.predict(des)
         visual_words_test[i, :] = np.bincount(words, minlength=codebook_size)
 
@@ -115,4 +115,4 @@ if __name__ == '__main__':
     accuracy = 100 * knn.score(visual_words_test, test_labels)
     print(accuracy)
     # Show Confusion Matrix
-    showConfusionMatrix(dist_name_list, conf_mat_list, labels_names)
+    # showConfusionMatrix(dist_name_list, conf_mat_list, labels_names)
