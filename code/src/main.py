@@ -7,6 +7,7 @@ from tqdm import tqdm
 from assessment import showConfusionMatrix
 from descriptors import get_keypoints, get_descriptors, get_bag_of_words
 from classifiers import get_dist_func
+from sklearn.preprocessing import Normalizer
 
 #Train parameters
 kp_detector = 'sift' #sift 
@@ -15,6 +16,7 @@ codebook_size = 128
 classif_type  =  'knn' #svm
 knn_metric = 'euclidean'
 save_trainData = True
+normalize = False
 
 
 def print_res(names, accuracies, times):
@@ -71,14 +73,20 @@ if __name__ == '__main__':
         # 2. Get descriptors (normal sift or spatial pyramid)
         kpt, des = get_descriptors(gray, kpt, desc_type)
         train_desc_list.append(des)
-        Train_label_per_descriptor.append(labels)
+        Train_label_per_descriptor.append(labels) 
+        #separar el descriptor en diferentes listas (?) 
 
     D = np.vstack(train_desc_list)
 
-    # 3. Normalize descriptors TODO
+
 
     # 4. Create codebook and fit with train dataset
     codebook, visual_words = get_bag_of_words(D, train_desc_list, codebook_size)
+
+    # 3. Normalize descriptors TODO
+    if(normalize):
+        transformer = Normalizer().fit(visual_words)
+        visual_words = transformer.fit_transform(visual_words)
 
     # 5. Train classifier
 
@@ -110,6 +118,8 @@ if __name__ == '__main__':
         kpt, des = get_descriptors(gray, kpt, desc_type)
         words = codebook.predict(des)
         visual_words_test[i, :] = np.bincount(words, minlength=codebook_size)
+        if(normalize):
+            visual_words_test = transformer.transform(visual_words_test)
 
     # ASSESSMENT OF THE CLASSIFIER
     accuracy = 100 * knn.score(visual_words_test, test_labels)
