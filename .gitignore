@@ -1,4 +1,5 @@
 Databases/
 .idea/
+.vscode/
 code/src/.ipynb_checkpoints/
 code/src/__pycache__/

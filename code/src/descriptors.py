@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import cv2
+from tqdm import tqdm 
 from sklearn.cluster import MiniBatchKMeans
 from nltk.cluster.kmeans import KMeansClusterer
 
@@ -8,11 +9,11 @@ from classifiers import get_dist_func
 
 #Descriptor parameters
 
-dense_descriptors = True
+dense_descriptors = False
 #SIFT Params
 maxScale = 15
 minScale = 7
-n_descriptors = 600
+n_descriptors = 300
 codebook_size = 128
 #Dense Params
 if dense_descriptors:
@@ -65,13 +66,13 @@ def get_keypoints(im, detector_type):
 def get_descriptors(im, kpt, descriptor_type):
     if descriptor_type == 'sift':
         detectorObject = cv2.xfeatures2d.SIFT_create()
-        des = detectorObject.compute(im, kpt)
+        kpt,des = detectorObject.compute(im, kpt)
     elif descriptor_type == 'spatial_pyramid':
         #TODO
         des = []
     else:
         raise (NotImplemented("descriptor_type not implemented or not recognized:" + str(descriptor_type)))
-    return des
+    return kpt,des
 
 def get_bag_of_words(D, desc_list, codebook_size, used_kmeans='mini_batch'):
     # We now compute a k-means clustering on the descriptor space
@@ -89,7 +90,7 @@ def get_bag_of_words(D, desc_list, codebook_size, used_kmeans='mini_batch'):
     # And, for each train image, we project each keypoint descriptor to its closest visual word.
     # We represent each of the images with the frequency of each visual word.
     visual_words = np.zeros((len(desc_list), codebook_size), dtype=np.float32)
-    for i in range(len(desc_list)):
+    for i in tqdm(range(len(desc_list))):
         words = codebook.predict(desc_list[i])
         visual_words[i, :] = np.bincount(words, minlength=codebook_size)
     return codebook, visual_words
