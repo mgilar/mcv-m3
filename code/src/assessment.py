@@ -29,3 +29,23 @@ def showConfusionMatrix(dist_name_list,conf_mat_list, labels_names):
             the_table.scale(2, 1)
             fig.tight_layout()
             plt.show()
+
+def print_res(names, accuracies, times):
+    """
+    Function used when showing results
+    """
+    def get_ristra_string(l, find_highest=False):
+        string = ""
+        for v in l:
+            if(isinstance(v, float)):
+                substring = "{0:.2f}".format(v)[:4]
+                if(find_highest and v == max([x for x in l if isinstance(x, float)])):
+                    substring = substring+"*"
+            else:
+                substring=v[:4]
+            string+=substring+"\t"
+        return string+"\n"
+    s  = "     \t"+get_ristra_string(names)
+    s += " Acc:\t"+get_ristra_string(accuracies, True)
+    s += "Time:\t"+get_ristra_string(times, False)
+    print(s)
