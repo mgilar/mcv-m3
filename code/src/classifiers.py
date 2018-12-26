@@ -1,7 +1,7 @@
 import cv2
 from sklearn.neighbors import KNeighborsClassifier, DistanceMetric
 n_neighbors = 6
-knn_metric = 'minkowski' # euclidean, manhattan, chebyshev, minkowski, bhatt
+knn_metric = 'euclidean' # euclidean, manhattan, chebyshev, minkowski, bhatt
 # KMeans Clusterer Options
 used_kmeans = "mini_batch" # mini_batch, nlkt
 distance_kmeans = "corr" # Only for nlkt

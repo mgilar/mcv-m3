@@ -11,9 +11,7 @@ from classifiers import get_dist_func
 
 dense_descriptors = False
 #SIFT Params
-maxScale = 15
-minScale = 7
-n_descriptors = 300
+n_descriptors = 600
 codebook_size = 128
 #Dense Params
 if dense_descriptors:

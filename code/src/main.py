@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from sklearn.model_selection import cross_validate, StratifiedKFold, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 from assessment import showConfusionMatrix
 from descriptors import get_keypoints, get_descriptors, get_bag_of_words
@@ -14,8 +15,8 @@ from sklearn.preprocessing import Normalizer
 #Train parameters
 kp_detector = 'sift' #sift 
 desc_type = 'sift' #pyramid
-codebook_sizes = [100,500,700,900,1000]
-classif_type  =  'knn' #svm
+codebook_sizes = [128]
+classif_type  =  'svm' #svm
 knn_metric = 'euclidean'
 save_trainData = False
 normalize = False
@@ -33,13 +34,13 @@ def load_data(filename):
 if __name__ == '__main__':
 
     # Load train and test files
-    total_train_images_filenames = pickle.load(open('./train_images_filenames_unix.dat', 'rb'))
-    total_test_images_filenames = pickle.load(open('./test_images_filenames_unix.dat', 'rb'))
-    total_train_labels = pickle.load(open('./train_labels_unix.dat', 'rb'))
-    total_test_labels = pickle.load(open('./test_labels_unix.dat', 'rb'))
+    total_train_images_filenames = pickle.load(open('./train_images_filenames.dat', 'rb'))
+    total_test_images_filenames = pickle.load(open('./test_images_filenames.dat', 'rb'))
+    total_train_labels = pickle.load(open('./train_labels.dat', 'rb'))
+    total_test_labels = pickle.load(open('./test_labels.dat', 'rb'))
 
     #Split train dataset for cross-validation
-    cv = StratifiedKFold(n_splits=5)
+    cv = StratifiedKFold(n_splits=2)
 
     for codebook_size in codebook_sizes:
         accumulated_accuracy=[]
@@ -70,19 +71,19 @@ if __name__ == '__main__':
             # 4. Create codebook and fit with train dataset
             codebook, visual_words = get_bag_of_words(D, train_desc_list, codebook_size)
 
-            # 3. Normalize descriptors TODO
+            # 3. Normalize descriptors 
             if(normalize):
                 transformer = Normalizer().fit(visual_words)
                 visual_words = transformer.fit_transform(visual_words)
 
             # 5. Train classifier
-
+            model = None
             if classif_type == 'knn':
-                knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1, metric=get_dist_func(knn_metric))
-                knn.fit(visual_words, train_labels)
+                model = KNeighborsClassifier(n_neighbors=5, n_jobs=-1, metric=get_dist_func(knn_metric))
+                model.fit(visual_words, train_labels)
             elif classif_type == 'svm':
-                pass
-                #TODO
+                model = SVC(C=1.0, kernel='poly', degree=3, gamma='auto', shrinking=False, probability=False, tol=0.001, max_iter=-1)
+                model.fit(visual_words, train_labels)
             else:
                 raise (NotImplemented("classif_type not implemented or not recognized:" + str(classif_type)))
 
@@ -110,8 +111,8 @@ if __name__ == '__main__':
                     visual_words_test = transformer.transform(visual_words_test)
 
             # ASSESSMENT OF THE CLASSIFIER
-            accuracy = 100 * knn.score(visual_words_test, val_labels)
+            accuracy = 100 * model.score(visual_words_test, val_labels)
             accumulated_accuracy.append(accuracy)
-        print("codebook size: ", codebook_size, " accuracy: ", np.sum(accumulated_accuracy)/5)
+        print("codebook size: ", codebook_size, " accuracy: ", np.sum(accumulated_accuracy)/len(accumulated_accuracy))
             # Show Confusion Matrix
             # showConfusionMatrix(dist_name_list, conf_mat_list, labels_names)
