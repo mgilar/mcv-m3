@@ -6,21 +6,22 @@ from tqdm import tqdm
 from sklearn.model_selection import cross_validate, StratifiedKFold, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.preprocessing import Normalizer, StandardScaler
 
 from assessment import showConfusionMatrix
 from descriptors import get_keypoints, get_descriptors, get_bag_of_words
 from classifiers import get_dist_func
-from sklearn.preprocessing import Normalizer
 
 #Train parameters
 kp_detector = 'sift' #sift 
 desc_type = 'sift' #pyramid
-codebook_sizes = [128]
+codebook_sizes = [1000]
 classif_type  =  'svm' #svm
 knn_metric = 'euclidean'
+kernel_type = 'hist_intersection' #'rbf' or 'hist_intersection'
 save_trainData = False
 normalize = False
-
+scaleData = True
 
 def save_data(object, filename):
     filehandler = open(filename, 'wb')
@@ -30,6 +31,34 @@ def save_data(object, filename):
 def load_data(filename):
     filehandler = open(filename, 'rb')
     return pickle.load(filehandler)
+
+def histogram_intersection(data_1, data_2):
+    """
+    Generalized histogram intersection kernel
+        K(x, y) = SUM_i min(|x_i|^alpha, |y_i|^alpha)
+    as defined in
+    "Generalized histogram intersection kernel for image recognition"
+    Sabri Boughorbel, Jean-Philippe Tarel, Nozha Boujemaa
+    International Conference on Image Processing (ICIP-2005)
+    http://perso.lcpc.fr/tarel.jean-philippe/publis/jpt-icip05.pdf
+    """
+    alpha = 1
+    data_1 = np.abs(data_1) ** alpha
+    data_2 = np.abs(data_2) ** alpha
+    kernel = np.zeros((data_1.shape[0], data_2.shape[0]))
+
+    for d in range(data_1.shape[1]):
+        column_1 = data_1[:, d].reshape(-1, 1)
+        column_2 = data_2[:, d].reshape(-1, 1)
+        kernel += np.minimum(column_1, column_2.T)
+
+    return kernel
+
+def select_svm_kernel(kernel_type):
+    if kernel_type in ['linear', 'rbf']:
+        return kernel_type
+    elif kernel_type == 'hist_intersection':
+        return histogram_intersection
 
 if __name__ == '__main__':
 
@@ -71,9 +100,13 @@ if __name__ == '__main__':
             # 4. Create codebook and fit with train dataset
             codebook, visual_words = get_bag_of_words(D, train_desc_list, codebook_size)
 
-            # 3. Normalize descriptors 
+            # 3. Normalize and scale descriptors
             if(normalize):
-                transformer = Normalizer().fit(visual_words)
+                transformer = Normalizer().fit(visual_words) #l2 norm by default
+                visual_words = transformer.fit_transform(visual_words)
+
+            if(scaleData):
+                transformer = StandardScaler().fit(visual_words)
                 visual_words = transformer.fit_transform(visual_words)
 
             # 5. Train classifier
@@ -82,7 +115,8 @@ if __name__ == '__main__':
                 model = KNeighborsClassifier(n_neighbors=5, n_jobs=-1, metric=get_dist_func(knn_metric))
                 model.fit(visual_words, train_labels)
             elif classif_type == 'svm':
-                model = SVC(C=1.0, kernel='poly', degree=3, gamma='auto', shrinking=False, probability=False, tol=0.001, max_iter=-1)
+                svm_kernel = select_svm_kernel(kernel_type)
+                model = SVC(C=1.0, kernel=svm_kernel, degree=3, gamma='auto', shrinking=False, probability=False, tol=0.001, max_iter=-1)
                 model.fit(visual_words, train_labels)
             else:
                 raise (NotImplemented("classif_type not implemented or not recognized:" + str(classif_type)))
