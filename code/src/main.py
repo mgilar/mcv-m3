@@ -68,7 +68,7 @@ if __name__ == '__main__':
     total_train_labels = pickle.load(open('./train_labels.dat', 'rb'))
     total_test_labels = pickle.load(open('./test_labels.dat', 'rb'))
 
-    #Split train dataset for cross-validation
+    # Split train dataset for cross-validation
     cv = StratifiedKFold(n_splits=2)
 
     for codebook_size in codebook_sizes:
@@ -82,7 +82,7 @@ if __name__ == '__main__':
             # TRAIN CLASSIFIER
 
             train_desc_list = []
-            Train_label_per_descriptor = []
+            train_label_per_descriptor = []
 
             for filename, labels in zip(tqdm(train_filenames), train_labels):
                 ima = cv2.imread(filename)
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 # 2. Get descriptors (normal sift or spatial pyramid)
                 kpt, des = get_descriptors(gray, kpt, desc_type)
                 train_desc_list.append(des)
-                Train_label_per_descriptor.append(labels)
+                train_label_per_descriptor.append(labels)
                 #separar el descriptor en diferentes listas (?)
 
             D = np.vstack(train_desc_list)
