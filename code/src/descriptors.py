@@ -11,7 +11,7 @@ from classifiers import get_dist_func
 
 dense_descriptors = False
 #SIFT Params
-n_descriptors = 600
+n_descriptors = 10
 codebook_size = 128
 #Dense Params
 if dense_descriptors:
@@ -51,6 +51,18 @@ def dense_keypoints(img, step, scaleMin, scaleMax):
             keypoints.append(cv2.KeyPoint(j, i, scale))
     return keypoints
 
+def spatialPyramid(keypoints, words, codebook_size, height, width, levels=2):
+    all_list = []
+    
+    num_blocs = 2**l
+    level_histograms = np.zeros((num_blocs,codebook_size))
+
+    for word, kpt in zip(words,keypoints):
+        (x,y) = kpt.pt
+        # level_histograms[]
+    
+
+
 def get_keypoints(im, detector_type):
     if (detector_type == 'dense'):
         kpt = dense_keypoints(im, stepValue, maxScale, minScale)
@@ -65,14 +77,11 @@ def get_descriptors(im, kpt, descriptor_type):
     if descriptor_type == 'sift':
         detectorObject = cv2.xfeatures2d.SIFT_create()
         kpt,des = detectorObject.compute(im, kpt)
-    elif descriptor_type == 'spatial_pyramid':
-        #TODO
-        des = []
     else:
         raise (NotImplemented("descriptor_type not implemented or not recognized:" + str(descriptor_type)))
     return kpt,des
 
-def get_bag_of_words(D, desc_list, codebook_size, used_kmeans='mini_batch'):
+def get_bag_of_words(D, desc_list, keypoint_list, codebook_size, used_kmeans='mini_batch'):
     # We now compute a k-means clustering on the descriptor space
     reassignment_ratio = 10 ** -4
     if (used_kmeans == "mini_batch"):
@@ -85,12 +94,21 @@ def get_bag_of_words(D, desc_list, codebook_size, used_kmeans='mini_batch'):
     else:
         raise (ValueError("KMeans not recognized"))
     codebook.fit(D)
-    # And, for each train image, we project each keypoint descriptor to its closest visual word.
-    # We represent each of the images with the frequency of each visual word.
-    visual_words = np.zeros((len(desc_list), codebook_size), dtype=np.float32)
-    for i in tqdm(range(len(desc_list))):
-        words = codebook.predict(desc_list[i])
-        visual_words[i, :] = np.bincount(words, minlength=codebook_size)
+    mode = 'all'
+    if(mode == 'all'):
+        # And, for each train image, we project each keypoint descriptor to its closest visual word.
+        # We represent each of the images with the frequency of each visual word.
+        visual_words = np.zeros((len(desc_list), codebook_size), dtype=np.float32)
+        for i in tqdm(range(len(desc_list))):
+            words = codebook.predict(desc_list[i])
+            visual_words[i, :] = np.bincount(words, minlength=codebook_size)
+    elif(mode == 'pyramids'):
+        visual_words = np.zeros((len(desc_list), codebook_size), dtype=np.float32)
+        for i in (range(len(desc_list))):
+            pass
+            # heigh, width = im.shape
+            # words = codebook.predict(desc_list[i])
+            # kpt,des = spatialPyramid(keypoint_list, words, codebook_size, heigh, width)
     return codebook, visual_words
 
 
