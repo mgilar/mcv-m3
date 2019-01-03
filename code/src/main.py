@@ -2,26 +2,28 @@ import cv2
 import numpy as np
 import pickle
 from tqdm import tqdm
-
+print("hola")
 from sklearn.model_selection import cross_validate, StratifiedKFold, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 from assessment import showConfusionMatrix
-from descriptors import get_keypoints, get_descriptors, get_bag_of_words
+from descriptors import get_keypoints, get_descriptors, get_bag_of_words, get_visual_words
 from classifiers import get_dist_func
 
 #Train parameters
 kp_detector = 'sift' #sift 
 desc_type = 'sift' #pyramid
-codebook_sizes = [1000]
+codebook_sizes = [128]
 classif_type  =  'svm' #svm
 knn_metric = 'euclidean'
 kernel_type = 'hist_intersection' #'rbf' or 'hist_intersection'
 save_trainData = False
-normalize = False
-scaleData = True
+normalize = True
+scaleData = False
+mode_bagofWords = 'pyramids'
+levels_pyramid = 2
 
 def save_data(object, filename):
     filehandler = open(filename, 'wb')
@@ -74,6 +76,8 @@ if __name__ == '__main__':
     for codebook_size in codebook_sizes:
         accumulated_accuracy=[]
         for train_index, val_index in cv.split(total_train_images_filenames, total_train_labels):
+            # train_index = train_index[:10]
+            # val_index = val_index[:10]
             train_filenames = [total_train_images_filenames[index] for index in train_index]
             train_labels = [total_train_labels[index] for index in train_index]
             val_filenames = [total_train_images_filenames[index] for index in val_index]
@@ -81,6 +85,7 @@ if __name__ == '__main__':
 
             # TRAIN CLASSIFIER
 
+            keypoint_list = []
             train_desc_list = []
             train_label_per_descriptor = []
 
@@ -91,6 +96,7 @@ if __name__ == '__main__':
                 kpt = get_keypoints(gray, kp_detector)
                 # 2. Get descriptors (normal sift or spatial pyramid)
                 kpt, des = get_descriptors(gray, kpt, desc_type)
+                keypoint_list.append(kpt)
                 train_desc_list.append(des)
                 train_label_per_descriptor.append(labels)
                 #separar el descriptor en diferentes listas (?)
@@ -98,16 +104,18 @@ if __name__ == '__main__':
             D = np.vstack(train_desc_list)
 
             # 4. Create codebook and fit with train dataset
-            codebook, visual_words = get_bag_of_words(D, train_desc_list, codebook_size)
+            codebook, visual_words = get_bag_of_words(levels_pyramid, mode_bagofWords, D, train_desc_list, keypoint_list, codebook_size)
 
             # 3. Normalize and scale descriptors
             if(normalize):
-                transformer = Normalizer().fit(visual_words) #l2 norm by default
-                visual_words = transformer.fit_transform(visual_words)
+                norm_model = Normalizer().fit(visual_words) #l2 norm by default
+                visual_words = norm_model.fit_transform(visual_words)
 
+            #scaling
             if(scaleData):
-                transformer = StandardScaler().fit(visual_words)
-                visual_words = transformer.fit_transform(visual_words)
+                scale_model = StandardScaler().fit(visual_words)
+                visual_words = scale_model.fit_transform(visual_words)
+
 
             # 5. Train classifier
             model = None
@@ -132,17 +140,28 @@ if __name__ == '__main__':
 
             # VALIDATE CLASSIFIER WITH CROSS-VALIDATION DATASET
 
-            visual_words_test = np.zeros((len(val_filenames), codebook_size), dtype=np.float32)
+            if(mode_bagofWords == 'all'):
+                visual_words_test = np.zeros((len(val_filenames), codebook_size), dtype=np.float32)
+            if(mode_bagofWords == 'pyramids'):
+                len_vw = 0
+                for i in range(0, levels_pyramid):
+                    len_vw += 2**(2*i)
+                len_vw *= codebook_size
+                visual_words_test = np.zeros((len(val_filenames), len_vw), dtype=np.float32)
+
             for i in tqdm(range(len(val_filenames))):
                 filename = val_filenames[i]
                 ima = cv2.imread(filename)
                 gray = cv2.cvtColor(ima, cv2.COLOR_BGR2GRAY)
                 kpt = get_keypoints(gray, kp_detector)
                 kpt, des = get_descriptors(gray, kpt, desc_type)
-                words = codebook.predict(des)
-                visual_words_test[i, :] = np.bincount(words, minlength=codebook_size)
-                if(normalize):
-                    visual_words_test = transformer.transform(visual_words_test)
+
+                _, visual_words_test[i,:] = get_visual_words(levels_pyramid, mode_bagofWords, codebook, des, kpt, codebook_size)
+
+            if(normalize):
+                visual_words_test = norm_model.transform(visual_words_test)
+            if(scaleData):
+                visual_words_test = scale_model.transform(visual_words_test)
 
             # ASSESSMENT OF THE CLASSIFIER
             accuracy = 100 * model.score(visual_words_test, val_labels)
