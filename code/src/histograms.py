@@ -7,7 +7,27 @@ from configobj import ConfigObj
 from math import floor
 from tqdm import tqdm
 
+
 HIST_NAMES = ["simple", "subimage", "pyramid", "pyramidFast"]
+
+def subImageHistogramsIndexed(keypoints, words, binNum, divisions, h, w):
+    # print(w,h)
+    imageHist = dict()
+    for i in range(divisions):
+        for j in range(divisions):
+            imageHist[(i, j)] = np.zeros((1,binNum))
+    divisor_w = w/divisions
+    divisor_h = h/divisions
+    for word, kpt in zip(words,keypoints):
+        (x,y) = kpt.pt
+        i = floor(x/divisor_w)
+        j = floor(y/divisor_h)
+        # if(not (i,j) in imageHist): # se puede convertir imageHist en una lista
+            # imageHist[(i, j)] = np.zeros(binNum)
+        imageHist[(i, j)][0,word]+=1
+
+
+    return imageHist
 
 def accBackpropagationHistograms(keypoint_list, words, binNum, levels, h, w):
     def accBack(histsIndexed, level):
@@ -38,32 +58,10 @@ def accBackpropagationHistograms(keypoint_list, words, binNum, levels, h, w):
         subHists = accBack(subHists, 2**level)
         level-=1
         hasFinished = (len(subHists) == 1)
-    imageHist = [subHists[(0,0)]] + imageHist
+
+    imageHist =  [np.concatenate(lh, axis=1) for lh in imageHist]   
+    imageHist = imageHist + [subHists[(0,0)]] 
+
     return imageHist[::-1]
         
             
-def subImageHistogramsIndexed(keypoints, words, binNum, divisions, h, w):
-    # print(w,h)
-    imageHist = dict()
-    divisor_w = w/divisions
-    divisor_h = h/divisions
-    for word, kpt in zip(words,keypoints):
-        (x,y) = kpt.pt
-        i = floor(x/divisor_w)
-        j = floor(h/divisor_h)
-        if(not imageHist.haskey((i,j))):
-            imageHist[(i, j)] = np.zeros(binNum)
-        imageHist[(i, j)][word]+=1
-
-    # for i in range(divisions):
-        # x1 = floor(i*(w/divisions))
-        # x2 = floor((i+1)*(w/divisions))
-        # for j in range(divisions):
-            # y1 = floor(j*(h/divisions))
-            # y2 = floor((j+1)*(h/divisions))
-            
-#            insiders = [x if x.x > 10 and x.x < 100 and x.y < 10 and x.y > 100 for x in desc]
-            # subImage = image[x1:x2,y1:y2,:]
-            # hist = generateHistogram(subImage, binNum, colorSpace=colorSpace)
-
-    return imageHist
