@@ -7,6 +7,8 @@ from nltk.cluster.kmeans import KMeansClusterer
 
 from classifiers import get_dist_func
 
+from histograms import accBackpropagationHistograms
+
 #Descriptor parameters
 
 dense_descriptors = False
@@ -60,7 +62,6 @@ def spatialPyramid(keypoints, words, codebook_size, height, width, levels=2):
     for word, kpt in zip(words,keypoints):
         (x,y) = kpt.pt
         # level_histograms[]
-    
 
 
 def get_keypoints(im, detector_type):
@@ -105,7 +106,9 @@ def get_bag_of_words(D, desc_list, keypoint_list, codebook_size, used_kmeans='mi
     elif(mode == 'pyramids'):
         visual_words = np.zeros((len(desc_list), codebook_size), dtype=np.float32)
         for i in (range(len(desc_list))):
-            pass
+            words = codebook.predict(desc_list[i])
+            vw = accBackpropagationHistograms(keypoint_list, words, codebook_size, heigh, width)
+            
             # heigh, width = im.shape
             # words = codebook.predict(desc_list[i])
             # kpt,des = spatialPyramid(keypoint_list, words, codebook_size, heigh, width)
