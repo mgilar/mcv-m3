@@ -63,5 +63,4 @@ def accBackpropagationHistograms(keypoint_list, words, binNum, levels, h, w):
     imageHist = imageHist + [subHists[(0,0)]] 
 
     return imageHist[::-1]
-        
-            
+          

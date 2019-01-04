@@ -31,6 +31,13 @@ class KMeansDistances(KMeansClusterer):
     def predict(self, vector):
         return self.classify_vectorspace(vector)
 
+def get_pyramid_visual_word_len(levels_pyramid, codebook_size):
+    len_vw = 0
+    for i in range(0, levels_pyramid):
+        len_vw += 2**(2*i)
+    len_vw *= codebook_size
+    return len_vw
+
 def dense_keypoints(img, step, scale_mode, scaleMin, scaleMax, mean, desvt ):
     keypoints = []
     heigh, width = img.shape
@@ -148,3 +155,10 @@ def get_visual_words(levels_pyramid, mode, codebook, descriptor, keypoints, code
         visual_words[0, :] = np.concatenate(vw)
     return codebook, visual_words
 
+def compute_descriptors(ima, kp_detector, desc_type, stepValue, scale_mode, minScale, maxScale, mean, desvt, n_descriptors ):
+    gray = cv2.cvtColor(ima, cv2.COLOR_BGR2GRAY)
+    # 1. Detect keypoints (sift or dense)
+    kpt = get_keypoints(gray, kp_detector, stepValue, scale_mode, minScale, maxScale, mean, desvt, n_descriptors=n_descriptors)
+    # 2. Get descriptors (normal sift or spatial pyramid)
+    kpt, des = get_descriptors(gray, kpt, desc_type)
+    return kpt, des

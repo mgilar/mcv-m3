@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from sklearn.neighbors import KNeighborsClassifier, DistanceMetric
 n_neighbors = 6
 knn_metric = 'euclidean' # euclidean, manhattan, chebyshev, minkowski, bhatt
@@ -37,3 +38,31 @@ def get_dist_func(name, force_function=False):
         KNN_METRIC = distlambda
 
     return KNN_METRIC
+
+def histogram_intersection(data_1, data_2):
+    """
+    Generalized histogram intersection kernel
+        K(x, y) = SUM_i min(|x_i|^alpha, |y_i|^alpha)
+    as defined in
+    "Generalized histogram intersection kernel for image recognition"
+    Sabri Boughorbel, Jean-Philippe Tarel, Nozha Boujemaa
+    International Conference on Image Processing (ICIP-2005)
+    http://perso.lcpc.fr/tarel.jean-philippe/publis/jpt-icip05.pdf
+    """
+    alpha = 1
+    data_1 = np.abs(data_1) ** alpha
+    data_2 = np.abs(data_2) ** alpha
+    kernel = np.zeros((data_1.shape[0], data_2.shape[0]))
+
+    for d in range(data_1.shape[1]):
+        column_1 = data_1[:, d].reshape(-1, 1)
+        column_2 = data_2[:, d].reshape(-1, 1)
+        kernel += np.minimum(column_1, column_2.T)
+
+    return kernel
+
+def select_svm_kernel(knn_metric):
+    if knn_metric in ['linear', 'rbf']:
+        return knn_metric
+    elif knn_metric == 'hist_intersection':
+        return histogram_intersection
