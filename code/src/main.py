@@ -92,7 +92,7 @@ class Classification(object):
             D = np.vstack(train_desc_list)
 
             # 3. Create codebook and fit with train dataset
-            codebook, visual_words = get_bag_of_words(self.levels_pyramid, self.mode_bagofWords, D, train_desc_list, keypoint_list, codebook_size, normalize_level_vw=self.normalize_level_vw, scaleData_level_vw=self.scaleData_level_vw)
+            codebook, visual_words = get_bag_of_words(self.levels_pyramid, self.mode_bagofWords, D, train_desc_list, keypoint_list, self.codebook_size, normalize_level_vw=self.normalize_level_vw, scaleData_level_vw=self.scaleData_level_vw)
 
             # 4. self.normalize and scale descriptors
             if(self.normalize):
@@ -129,9 +129,9 @@ class Classification(object):
             # VALIDATE CLASSIFIER WITH CROSS-VALIDATION DATASET
 
             if(self.mode_bagofWords == 'all'):
-                visual_words_test = np.zeros((len(val_filenames), codebook_size), dtype=np.float32)
+                visual_words_test = np.zeros((len(val_filenames), self.codebook_size), dtype=np.float32)
             if(self.mode_bagofWords == 'pyramids'):
-                len_vw = get_pyramid_visual_word_len(self.levels_pyramid,codebook_size)
+                len_vw = get_pyramid_visual_word_len(self.levels_pyramid,self.codebook_size)
                 visual_words_test = np.zeros((len(val_filenames), len_vw), dtype=np.float32)
 
             for i in tqdm(range(len(val_filenames)), desc="compute descriptors"):
@@ -139,7 +139,7 @@ class Classification(object):
                 ima = cv2.imread(filename)
                 kpt, des = compute_descriptors(ima, self.kp_detector, self.desc_type, self.stepValue, self.scale_mode, self.minScale, self.maxScale, self.mean, self.desvt, self.n_descriptors )
 
-                _, visual_words_test[i,:] = get_visual_words(self.levels_pyramid, self.mode_bagofWords, codebook, des, kpt, codebook_size,  normalize_level_vw=self.normalize_level_vw, scaleData_level_vw=self.scaleData_level_vw)
+                _, visual_words_test[i,:] = get_visual_words(self.levels_pyramid, self.mode_bagofWords, codebook, des, kpt, self.codebook_size,  normalize_level_vw=self.normalize_level_vw, scaleData_level_vw=self.scaleData_level_vw)
 
             if(self.normalize):
                 visual_words_test = norm_model.transform(visual_words_test)
@@ -158,5 +158,5 @@ class Classification(object):
 if __name__ == "__main__":
     imageclassifier = Classification()
     accuracy = imageclassifier.compute()
-    print("codebook size: ", codebook_size, " accuracy: ", accuracy)
+    print("codebook size: ", self.codebook_size, " accuracy: ", accuracy)
 
