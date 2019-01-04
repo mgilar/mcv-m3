@@ -13,17 +13,39 @@ from descriptors import get_keypoints, get_descriptors, get_bag_of_words, get_vi
 from classifiers import get_dist_func
 
 #Train parameters
-kp_detector = 'sift' #sift 
-desc_type = 'sift' #pyramid
+kp_detector = 'sift' # sift dense
+desc_type = 'sift' # sift
+n_descriptors = 600
+
+#visual words pyramids
+mode_bagofWords = 'pyramids'
+
+#pyramids params
+levels_pyramid = 2
 codebook_sizes = [128]
-classif_type  =  'svm' #svm
+normalize_level_vw = True
+scaleData_level_vw = False
+
+classif_type  =  'svm' # knn svm
 knn_metric = 'euclidean'
 kernel_type = 'hist_intersection' #'rbf' or 'hist_intersection'
 save_trainData = False
+
+#data normalization and scalation
 normalize = True
 scaleData = False
-mode_bagofWords = 'pyramids'
-levels_pyramid = 2
+
+#Dense Params
+stepValue = 10
+scale_mode = "gauss" # random, uniform, gauss
+
+#uniform 
+maxScale = 15
+minScale = 7
+#gauss
+mean = 15
+desvt= 7
+
 
 def save_data(object, filename):
     filehandler = open(filename, 'wb')
@@ -93,7 +115,7 @@ if __name__ == '__main__':
                 ima = cv2.imread(filename)
                 gray = cv2.cvtColor(ima, cv2.COLOR_BGR2GRAY)
                 # 1. Detect keypoints (sift or dense)
-                kpt = get_keypoints(gray, kp_detector)
+                kpt = get_keypoints(gray, kp_detector, stepValue, scale_mode, minScale, maxScale, mean, desvt, n_descriptors=n_descriptors)
                 # 2. Get descriptors (normal sift or spatial pyramid)
                 kpt, des = get_descriptors(gray, kpt, desc_type)
                 keypoint_list.append(kpt)
@@ -104,7 +126,7 @@ if __name__ == '__main__':
             D = np.vstack(train_desc_list)
 
             # 4. Create codebook and fit with train dataset
-            codebook, visual_words = get_bag_of_words(levels_pyramid, mode_bagofWords, D, train_desc_list, keypoint_list, codebook_size)
+            codebook, visual_words = get_bag_of_words(levels_pyramid, mode_bagofWords, D, train_desc_list, keypoint_list, codebook_size, normalize_level_vw=normalize_level_vw, scaleData_level_vw=scaleData_level_vw)
 
             # 3. Normalize and scale descriptors
             if(normalize):

@@ -10,25 +10,10 @@ from classifiers import get_dist_func
 from histograms import accBackpropagationHistograms
 from sklearn.preprocessing import Normalizer, StandardScaler
 
-#Descriptor parameters
 
-dense_descriptors = False
-#SIFT Params
-n_descriptors = 600
-
-#pyramid
+#pyramid size
 image_width = 256
 image_height = 256
-
-normalize_level_vw = True
-scaleData_level_vw = False
-#Dense Params
-if dense_descriptors:
-    stepValue = 10
-    mean = 15
-    desvt= 7
-    scale_mode = "gauss" # random, uniform, gauss
-
 
 class KMeansDistances(KMeansClusterer):
     """
@@ -46,7 +31,7 @@ class KMeansDistances(KMeansClusterer):
     def predict(self, vector):
         return self.classify_vectorspace(vector)
 
-def dense_keypoints(img, step, scaleMin, scaleMax):
+def dense_keypoints(img, step, scale_mode, scaleMin, scaleMax, mean, desvt ):
     keypoints = []
     heigh, width = img.shape
     for i in range(0, heigh, step):
@@ -60,20 +45,10 @@ def dense_keypoints(img, step, scaleMin, scaleMax):
             keypoints.append(cv2.KeyPoint(j, i, scale))
     return keypoints
 
-def spatialPyramid(keypoints, words, codebook_size, height, width, levels=2):
-    all_list = []
-    
-    num_blocs = 2**l
-    level_histograms = np.zeros((num_blocs,codebook_size))
 
-    for word, kpt in zip(words,keypoints):
-        (x,y) = kpt.pt
-        # level_histograms[]
-
-
-def get_keypoints(im, detector_type):
+def get_keypoints(im, detector_type, step, scale_mode, scaleMin, scaleMax, mean, desvt, n_descriptors=600):
     if (detector_type == 'dense'):
-        kpt = dense_keypoints(im, stepValue, maxScale, minScale)
+        kpt = dense_keypoints(im, step, scale_mode, scaleMin, scaleMax, mean, desvt )
     elif (detector_type == 'sift'):
         detectorObject = cv2.xfeatures2d.SIFT_create(nfeatures=n_descriptors)
         kpt = detectorObject.detect(im)
@@ -89,7 +64,7 @@ def get_descriptors(im, kpt, descriptor_type):
         raise (NotImplemented("descriptor_type not implemented or not recognized:" + str(descriptor_type)))
     return kpt,des
 
-def get_bag_of_words(levels_pyramid, mode, D, desc_list, keypoint_list, codebook_size, used_kmeans='mini_batch'):
+def get_bag_of_words(levels_pyramid, mode, D, desc_list, keypoint_list, codebook_size, normalize_level_vw=True, scaleData_level_vw=False, used_kmeans='mini_batch'):
     # We now compute a k-means clustering on the descriptor space
     reassignment_ratio = 10 ** -4
     if (used_kmeans == "mini_batch"):
