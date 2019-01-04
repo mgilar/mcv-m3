@@ -71,6 +71,16 @@ def get_descriptors(im, kpt, descriptor_type):
         raise (NotImplemented("descriptor_type not implemented or not recognized:" + str(descriptor_type)))
     return kpt,des
 
+def select_descriptors(desc_list, descriptors_per_image ):
+    selected_index = []
+    addition_idx = 0
+    for x in desc_list:
+        num_samples = min(len(x),descriptors_per_image)
+        idx = random.sample(range(0,len(x)), num_samples)
+        selected_index.extend(np.add(idx, addition_idx))
+        addition_idx += len(x)
+    return np.array(selected_index)
+
 def get_bag_of_words(levels_pyramid, mode, D, desc_list, keypoint_list, codebook_size, normalize_level_vw=True, scaleData_level_vw=False, used_kmeans='mini_batch'):
     # We now compute a k-means clustering on the descriptor space
     reassignment_ratio = 10 ** -4

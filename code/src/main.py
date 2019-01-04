@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pickle
 from tqdm import tqdm
+import random
 
 from sklearn.model_selection import cross_validate, StratifiedKFold, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
@@ -9,7 +10,7 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 from assessment import showConfusionMatrix
-from descriptors import get_bag_of_words, get_visual_words, compute_descriptors, get_pyramid_visual_word_len
+from descriptors import get_bag_of_words, get_visual_words, compute_descriptors, get_pyramid_visual_word_len, select_descriptors
 from classifiers import get_dist_func, select_svm_kernel
 
 def save_data(object, filename):
@@ -37,6 +38,8 @@ class Classification(object):
 
         #visual words pyramids
         self.mode_bagofWords = 'pyramids'
+        self.reduce_num_of_features = False
+        self.features_per_img = 100
 
         #pyramids params
         self.levels_pyramid = 2
@@ -75,8 +78,8 @@ class Classification(object):
 
         accumulated_accuracy=[]        
         for train_index, val_index in cv.split(self.total_train_images_filenames, self.total_train_labels):
-            # train_index = train_index[:10]
-            # val_index = val_index[:10]
+            train_index = train_index[:200]
+            val_index = val_index[:200]
             train_filenames = [self.total_train_images_filenames[index] for index in train_index]
             train_labels = [self.total_train_labels[index] for index in train_index]
             val_filenames = [self.total_train_images_filenames[index] for index in val_index]
@@ -87,14 +90,19 @@ class Classification(object):
             train_desc_list = []
             train_label_per_descriptor = []
 
-            for filename, labels in zip(tqdm(train_filenames, desc="compute descriptors"), train_labels):
+            for filename, labels in zip(tqdm(train_filenames, desc="train descriptors"), train_labels):
                 ima = cv2.imread(filename)
                 kpt, des = compute_descriptors(ima, self.kp_detector, self.desc_type, self.stepValue, self.scale_mode, self.minScale, self.maxScale, self.mean, self.desvt, self.n_descriptors)
                 keypoint_list.append(kpt)
                 train_desc_list.append(des)
                 train_label_per_descriptor.append(labels)
-
+            
             D = np.vstack(train_desc_list)
+
+            # reducing the number of descriptors used in bag of words
+            if(self.reduce_num_of_features):
+                selected_index = select_descriptors(train_desc_list, self.features_per_img)
+                D = D[selected_index]
 
             # 3. Create codebook and fit with train dataset
             codebook, visual_words = get_bag_of_words(self.levels_pyramid, self.mode_bagofWords, D, train_desc_list, keypoint_list, self.codebook_size, normalize_level_vw=self.normalize_level_vw, scaleData_level_vw=self.scaleData_level_vw)
@@ -139,7 +147,7 @@ class Classification(object):
                 len_vw = get_pyramid_visual_word_len(self.levels_pyramid,self.codebook_size)
                 visual_words_test = np.zeros((len(val_filenames), len_vw), dtype=np.float32)
 
-            for i in tqdm(range(len(val_filenames)), desc="compute descriptors"):
+            for i in tqdm(range(len(val_filenames)), desc="test descriptors"):
                 filename = val_filenames[i]
                 ima = cv2.imread(filename)
                 kpt, des = compute_descriptors(ima, self.kp_detector, self.desc_type, self.stepValue, self.scale_mode, self.minScale, self.maxScale, self.mean, self.desvt, self.n_descriptors )
