@@ -46,8 +46,13 @@ class Classification(object):
 
         self.classif_type  =  'svm' # knn svm
         self.knn_metric = 'euclidean'
-        self.knn_metric = 'hist_intersection' #'rbf' or 'hist_intersection'
+        self.svm_metric = 'hist_intersection' #'rbf' or 'hist_intersection'
         self.save_trainData = False
+
+        #svm 
+        self.C=1.0
+        self.degree=3
+        self.gamma='auto'
 
         #data normalization and scalation
         self.normalize = True
@@ -111,8 +116,8 @@ class Classification(object):
                 model = KNeighborsClassifier(n_neighbors=5, n_jobs=-1, metric=get_dist_func(self.knn_metric))
                 model.fit(visual_words, train_labels)
             elif self.classif_type == 'svm':
-                svm_kernel = select_svm_kernel(self.knn_metric)
-                model = SVC(C=1.0, kernel=svm_kernel, degree=3, gamma='auto', shrinking=False, probability=False, tol=0.001, max_iter=-1)
+                svm_kernel = select_svm_kernel(self.svm_metric)
+                model = SVC(C=self.C, kernel=svm_kernel, degree=self.degree, gamma=self.gamma, shrinking=False, probability=False, tol=0.001, max_iter=-1)
                 model.fit(visual_words, train_labels)
             else:
                 raise (NotImplemented("self.classif_type not implemented or not recognized:" + str(self.classif_type)))
@@ -158,5 +163,5 @@ class Classification(object):
 if __name__ == "__main__":
     imageclassifier = Classification()
     accuracy = imageclassifier.compute()
-    print("codebook size: ", self.codebook_size, " accuracy: ", accuracy)
+    print(" accuracy: ", accuracy)
 
