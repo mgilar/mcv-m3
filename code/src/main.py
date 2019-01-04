@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pickle
 from tqdm import tqdm
-print("hola")
+
 from sklearn.model_selection import cross_validate, StratifiedKFold, GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
