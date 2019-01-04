@@ -85,7 +85,6 @@ def select_svm_kernel(kernel_type):
         return histogram_intersection
 
 if __name__ == '__main__':
-
     # Load train and test files
     total_train_images_filenames = pickle.load(open('./train_images_filenames.dat', 'rb'))
     total_test_images_filenames = pickle.load(open('./test_images_filenames.dat', 'rb'))
@@ -178,7 +177,7 @@ if __name__ == '__main__':
                 kpt = get_keypoints(gray, kp_detector)
                 kpt, des = get_descriptors(gray, kpt, desc_type)
 
-                _, visual_words_test[i,:] = get_visual_words(levels_pyramid, mode_bagofWords, codebook, des, kpt, codebook_size)
+                _, visual_words_test[i,:] = get_visual_words(levels_pyramid, mode_bagofWords, codebook, des, kpt, codebook_size,  normalize_level_vw=normalize_level_vw, scaleData_level_vw=scaleData_level_vw)
 
             if(normalize):
                 visual_words_test = norm_model.transform(visual_words_test)

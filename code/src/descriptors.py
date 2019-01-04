@@ -117,7 +117,7 @@ def get_bag_of_words(levels_pyramid, mode, D, desc_list, keypoint_list, codebook
     return codebook, visual_words
 
 
-def get_visual_words(levels_pyramid, mode, codebook, descriptor, keypoints, codebook_size):
+def get_visual_words(levels_pyramid, mode, codebook, descriptor, keypoints, codebook_size, normalize_level_vw=True, scaleData_level_vw=False):
     if(mode == 'all'):
         visual_words = np.zeros((1, codebook_size), dtype=np.float32)
         words = codebook.predict(descriptor)
