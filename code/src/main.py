@@ -30,47 +30,52 @@ class Classification(object):
         self.total_train_labels = pickle.load(open('./train_labels.dat', 'rb'))
         self.total_test_labels = pickle.load(open('./test_labels.dat', 'rb'))
 
-        #Train parameters
-        self.kp_detector = 'sift' # sift dense
+        #Cross-validation parameters
+        self.split_num = 2 #number of k-folds
+
+        # Descriptors parameters
+        self.kp_detector = 'dense' # sift dense
         self.desc_type = 'sift' # sift
         self.n_descriptors = 600
-        self.split_num = 2
 
-        #visual words pyramids
-        self.mode_bagofWords = 'pyramids'
-        self.reduce_num_of_features = False
+        # Dense SIFT parameters
+        self.stepValue = 10
+        self.scale_mode = "multiple"  # multiple random, uniform, gauss
+        # uniform scale params
+        self.maxScale = 15
+        self.minScale = 7
+        # gauss scale params
+        self.mean = 15
+        self.desvt = 7
+
+        #BagOfVisualWords parameters
+        self.mode_bagofWords = 'pyramids' # all pyramids
+        self.reduce_num_of_features = True
         self.features_per_img = 100
 
-        #pyramids params
+        #Spatial pyramid params
         self.levels_pyramid = 2
         self.codebook_size = 128
         self.normalize_level_vw = True
         self.scaleData_level_vw = False
 
+        #Data normalization and scalation
+        self.normalize = True
+        self.scaleData = False
+
+        #Classifier parameters
         self.classif_type  =  'svm' # knn svm
         self.knn_metric = 'euclidean'
         self.svm_metric = 'hist_intersection' #'rbf' or 'hist_intersection'
         self.save_trainData = False
-
-        #svm 
+        #SVM parameters
         self.C=1.0
         self.degree=3
         self.gamma='auto'
 
-        #data normalization and scalation
-        self.normalize = True
-        self.scaleData = False
 
-        #Dense Params
-        self.stepValue = 10
-        self.scale_mode = "gauss" # random, uniform, gauss
 
-        #uniform 
-        self.maxScale = 15
-        self.minScale = 7
-        #gauss
-        self.mean = 15
-        self.desvt= 7
+
 
     def compute(self):
         # Split train dataset for cross-validation
@@ -169,7 +174,10 @@ class Classification(object):
             return np.sum(accumulated_accuracy)/len(accumulated_accuracy)
 
 if __name__ == "__main__":
-    imageclassifier = Classification()
-    accuracy = imageclassifier.compute()
-    print(" accuracy: ", accuracy)
+    classifier_images = Classification()
+    step_sizes = [10, 15, 20]
+
+    for step in step_sizes:
+        classifier_images.stepValue = step
+        print(classifier_images.compute())
 

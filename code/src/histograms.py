@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import cv2 as cv
-from matplotlib import pyplot as plt
-from configobj import ConfigObj
 from math import floor
-from tqdm import tqdm
 
 
 HIST_NAMES = ["simple", "subimage", "pyramid", "pyramidFast"]

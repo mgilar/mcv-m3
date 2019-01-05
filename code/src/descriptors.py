@@ -43,13 +43,18 @@ def dense_keypoints(img, step, scale_mode, scaleMin, scaleMax, mean, desvt ):
     heigh, width = img.shape
     for i in range(0, heigh, step):
         for j in range(0, width, step):
-            if (scale_mode == "random"):
-                scale = np.random.rand()
-            elif (scale_mode == "uniform"):
-                scale = random.uniform(scaleMin, scaleMax)  # maybe another type of randomness?
-            elif (scale_mode == "gauss"):
-                scale = abs(random.gauss(mean, desvt))
-            keypoints.append(cv2.KeyPoint(j, i, scale))
+            if (scale_mode == "multiple"):
+                scales = [4, 8, 12, 16]
+                for scale in scales:
+                    keypoints.append(cv2.KeyPoint(j, i, scale))
+            else:
+                if (scale_mode == "random"):
+                    scale = np.random.rand()
+                elif (scale_mode == "uniform"):
+                    scale = random.uniform(scaleMin, scaleMax)  # maybe another type of randomness?
+                elif (scale_mode == "gauss"):
+                    scale = abs(random.gauss(mean, desvt))
+                keypoints.append(cv2.KeyPoint(j, i, scale))
     return keypoints
 
 
@@ -88,8 +93,6 @@ def get_bag_of_words(levels_pyramid, mode, D, desc_list, keypoint_list, codebook
         codebook = MiniBatchKMeans(n_clusters=codebook_size, verbose=False, batch_size=codebook_size * 20,
                                    compute_labels=False, reassignment_ratio=reassignment_ratio, random_state=42)
     elif (used_kmeans == "nlkt"):
-        DIST = get_dist_func('corr', True)
-        # codebook = KMeansDistances(codebook_size, DIST, repeats=10)
         codebook = KMeansDistances(codebook_size, repeats=10)
     else:
         raise (ValueError("KMeans not recognized"))
