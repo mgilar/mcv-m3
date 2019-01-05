@@ -39,7 +39,7 @@ class Classification(object):
         self.n_descriptors = 600
 
         # Dense SIFT parameters
-        self.stepValue = 10
+        self.stepValue = 50
         self.scale_mode = "multiple"  # multiple random, uniform, gauss
         # uniform scale params
         self.maxScale = 15
@@ -72,9 +72,6 @@ class Classification(object):
         self.C=1.0
         self.degree=3
         self.gamma='auto'
-
-
-
 
 
     def compute(self):
@@ -171,13 +168,13 @@ class Classification(object):
             # Show Confusion Matrix
             # showConfusionMatrix(dist_name_list, conf_mat_list, labels_names)
 
-            return np.sum(accumulated_accuracy)/len(accumulated_accuracy)
+        return np.sum(accumulated_accuracy)/len(accumulated_accuracy)
 
 if __name__ == "__main__":
     classifier_images = Classification()
-    step_sizes = [10, 15, 20]
+    # step_sizes = [10, 15, 20]
 
-    for step in step_sizes:
-        classifier_images.stepValue = step
-        print(classifier_images.compute())
+    # for step in step_sizes:
+    #     classifier_images.stepValue = step
+    print(classifier_images.compute())
 
