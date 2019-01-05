@@ -25,6 +25,21 @@ def plot(x, y, label="accuracy", title="Result", xlabel="¿?¿?"):
     ax.set_title(title)
     plt.xlabel(xlabel)
 
+def plot3d(x, y, z, label="accuracy", title="Result", xlabel="¿?¿?"):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    ax.plot_wireframe(x, y, z, )
+    ax.legend(loc="upper right")
+    for i, j in zip(x, y):
+        ax.annotate(str(j)[:4], xy=(i,j))
+    ax.set_title(title)
+    plt.xlabel(xlabel)
+
+def get_max_key(d):
+    return max(d.keys(), key=lambda x: d[x])
+
+
 def showConfusionMatrix(dist_name_list,conf_mat_list, labels_names):
     # Show Confusion Matrix
     show_matrix = "bray"
