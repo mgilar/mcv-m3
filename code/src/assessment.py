@@ -14,16 +14,19 @@ dist_name_list = ["euclidean", "manhattan", "chebyshev", "minkowski", "hamming",
 
 #TODO plot other assessment metrics
 
-def plot(x, y, label="accuracy", title="Result", xlabel="¿?¿?"):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+def plot(dict, label="accuracy", title="Result", xlabel="¿?¿?"):
+	x = list(dict.keys())
+	y = list(dict.values())
+	
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
 
-    ax.plot(x, y, "r.-",label="accuracy", markersize=10.0)
-    ax.legend(loc="upper right")
-    for i, j in zip(x, y):
-        ax.annotate(str(j)[:4], xy=(i,j))
-    ax.set_title(title)
-    plt.xlabel(xlabel)
+	ax.plot(x, y, "r.-",label="accuracy", markersize=10.0)
+	ax.legend(loc="upper right")
+	for i, j in zip(x, y):
+		ax.annotate(str(j)[:4], xy=(i,j))
+	ax.set_title(title)
+	plt.xlabel(xlabel)
 
 def plot3d(x, y, z, label="accuracy", title="Result", xlabel="¿?¿?"):
     fig = plt.figure()
